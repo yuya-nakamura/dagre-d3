@@ -29,38 +29,40 @@ var DIST_DIR = "dist";
 var DEMO_SRC = "demo/**/*";
 var DEMO_BUILD = BUILD_DIST_DIR + "/demo";
 
-gulp.task("demo:build", function() {
+gulp.task("demo:build", function () {
     return gulp.src(DEMO_SRC)
         .pipe(replace("../" + BUILD_DIST_DIR + "/dagre-d3.js", "../dagre-d3.js"))
         .pipe(gulp.dest(DEMO_BUILD));
 });
 
-gulp.task("demo:watch", ["demo:build"], function() {
+gulp.task("demo:watch", ["demo:build"], function () {
     gulp.src(DEMO_SRC)
-        .pipe(watch(DEMO_SRC), { verbose: true })
+        .pipe(watch(DEMO_SRC), {
+            verbose: true
+        })
         .pipe(changed(DEMO_BUILD))
         .pipe(replace("../" + BUILD_DIST_DIR + "/dagre-d3.js", "../dagre-d3.js"))
         .pipe(gulp.dest(DEMO_BUILD));
 });
 
-gulp.task("demo:test", ["demo:build"], function() {
+gulp.task("demo:test", ["demo:build"], function () {
     return gulp.src("test/demo-test.js")
         .pipe(shell("phantomjs <%= (file.path) %>"));
 });
 
-gulp.task("js:build", function() {
+gulp.task("js:build", function () {
     return makeJsBundleTask(false);
 });
 
-gulp.task("js:watch", function() {
+gulp.task("js:watch", function () {
     return makeJsBundleTask(true);
 });
 
-gulp.task("js:test", ["js:build"], function(cb) {
+gulp.task("js:test", ["js:build"], function (cb) {
     karmaSingleRun(__dirname + "/karma.conf.js", cb);
 });
 
-gulp.task("js:test:watch", ["js:build"], function(cb) {
+gulp.task("js:test:watch", ["js:build"], function (cb) {
     karma.start({
         configFile: __dirname + "/karma.conf.js",
         singleRun: false,
@@ -69,7 +71,7 @@ gulp.task("js:test:watch", ["js:build"], function(cb) {
     cb();
 });
 
-gulp.task("core-js:build", function() {
+gulp.task("core-js:build", function () {
     return makeBundleTask("./index.js", "dagre-d3.core.js", false, {
         standalone: "dagreD3",
         bundleExternal: false,
@@ -77,25 +79,25 @@ gulp.task("core-js:build", function() {
     });
 });
 
-gulp.task("core-js:test", ["core-js:build"], function(cb) {
+gulp.task("core-js:test", ["core-js:build"], function (cb) {
     karmaSingleRun(__dirname + "/karma.core.conf.js", cb);
 });
 
-gulp.task("version:build", function() {
+gulp.task("version:build", function () {
     var pkg = readPackageJson();
     fs.writeFileSync("lib/version.js", generateVersionJs(pkg));
 });
 
-gulp.task("bower:build", function() {
+gulp.task("bower:build", function () {
     var pkg = readPackageJson();
     fs.writeFileSync("bower.json", generateBowerJson(pkg));
 });
 
-gulp.task("build", ["demo:build", "js:build", "js:test", "core-js:build", "core-js:test", "demo:test"]);
+gulp.task("build", ["js:build", "core-js:build"]);
 
 gulp.task("watch", ["demo:watch", "js:watch", "js:test:watch"]);
 
-gulp.task("serve", ["watch"], function() {
+gulp.task("serve", ["watch"], function () {
     browserSync.init({
         files: BUILD_DIST_DIR + "/**/*",
         notify: false,
@@ -108,17 +110,17 @@ gulp.task("serve", ["watch"], function() {
     });
 });
 
-gulp.task("dist", ["version:build", "bower:build", "build"], function() {
+gulp.task("dist", ["version:build", "bower:build", "build"], function () {
     return gulp.src(BUILD_DIST_DIR + "/**/*")
         .pipe(gulp.dest(DIST_DIR));
 });
 
-gulp.task("release", ["dist"], function() {
+gulp.task("release", ["dist"], function () {
     return gulp.src("src/release/release.sh")
         .pipe(shell("<%= (file.path) %>"));
 });
 
-gulp.task("clean", function(cb) {
+gulp.task("clean", function (cb) {
     del(BUILD_DIR, cb);
 });
 
@@ -153,11 +155,11 @@ function makeBundleTask(src, name, watch, args) {
         gutil.log("Starting '" + gutil.colors.cyan("browserify " + name) + "'...");
         var start = process.hrtime();
         var compileStream = bundler.bundle()
-            .on("error", function(err) {
+            .on("error", function (err) {
                 gutil.log(gutil.colors.red("browserify error (" + name + "): " + err.message));
                 this.emit("end");
             })
-            .on("end", function() {
+            .on("end", function () {
                 var end = process.hrtime(start);
                 gutil.log("Finished '" + gutil.colors.cyan("browserify " + name) + "' after",
                     gutil.colors.magenta(prettyTime(end)));
@@ -165,9 +167,15 @@ function makeBundleTask(src, name, watch, args) {
             .pipe(source(name))
             .pipe(gulp.dest(BUILD_DIST_DIR))
             .pipe(buffer())
-            .pipe(sourcemaps.init({ loadMaps: true }))
-            .pipe(uglify({ preserveComments: "some" }))
-            .pipe(rename({ suffix: ".min" }))
+            .pipe(sourcemaps.init({
+                loadMaps: true
+            }))
+            .pipe(uglify({
+                preserveComments: "some"
+            }))
+            .pipe(rename({
+                suffix: ".min"
+            }))
             .pipe(sourcemaps.write("./"))
             .pipe(gulp.dest(BUILD_DIST_DIR));
 
@@ -197,11 +205,15 @@ function makeBundleTask(src, name, watch, args) {
 }
 
 function generateBowerJson(pkg) {
-    return prettifyJson(applyTemplate("src/bower.json.tmpl", { pkg: pkg }));
+    return prettifyJson(applyTemplate("src/bower.json.tmpl", {
+        pkg: pkg
+    }));
 }
 
 function generateVersionJs(pkg) {
-    return applyTemplate("src/version.js.tmpl", { pkg: pkg });
+    return applyTemplate("src/version.js.tmpl", {
+        pkg: pkg
+    });
 }
 
 function applyTemplate(templateFile, props) {
